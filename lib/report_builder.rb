@@ -17,7 +17,7 @@ class ReportBuilder
     'Organizations' => '🏢'
   }.freeze
 
-  SEPARATOR = '━' * 32
+  SEPARATOR = '───'
 
   def initialize(issues, config, dry_run: false)
     @issues = issues
@@ -150,23 +150,21 @@ class ReportBuilder
       "#{PRIORITY_EMOJI[priority]} #{priority}: #{build_slack_link(url, count.to_s)}"
     end
 
-    # Status line
+    # Status parts
     status_parts = []
     if stats[:unassigned].positive?
       url = build_jql_url(build_unassigned_jql)
-      status_parts << "⚠️ #{build_slack_link(url, stats[:unassigned].to_s)} unassigned"
+      status_parts << "🪑 #{build_slack_link(url, stats[:unassigned].to_s)} unassigned"
     end
     if stats[:blocked].positive?
       url = build_jql_url(build_blocked_jql)
       status_parts << "🚫 #{build_slack_link(url, stats[:blocked].to_s)} blocked"
     end
 
-    lines = []
-    lines << "📊 *#{total_link} open issues*"
-    lines << "├─ #{priority_parts.join('  ·  ')}" unless priority_parts.empty?
-    lines << "└─ #{status_parts.join('  ·  ')}" unless status_parts.empty?
+    # All on separate lines, no tree symbols
+    all_parts = priority_parts + status_parts
 
-    lines.join("\n")
+    "📊 *#{total_link} open issues*\n#{all_parts.join('  ·  ')}"
   end
 
   def build_teams_section(stats)
@@ -200,19 +198,16 @@ class ReportBuilder
     status_parts = []
     if team_stats[:unassigned].positive?
       url = build_jql_url(build_team_unassigned_jql(squad_values))
-      status_parts << "⚠️ #{build_slack_link(url, team_stats[:unassigned].to_s)} unassigned"
+      status_parts << "🪑 #{build_slack_link(url, team_stats[:unassigned].to_s)} unassigned"
     end
     if team_stats[:blocked].positive?
       url = build_jql_url(build_team_blocked_jql(squad_values))
       status_parts << "🚫 #{build_slack_link(url, team_stats[:blocked].to_s)} blocked"
     end
 
-    lines = []
-    lines << "#{icon} *#{team_name}* · #{total_link}"
-    lines << "   #{priority_parts.join('  ·  ')}" unless priority_parts.empty?
-    lines << "   #{status_parts.join('  ·  ')}" unless status_parts.empty?
-
-    lines.join("\n")
+    # All in one line
+    all_parts = priority_parts + status_parts
+    "#{icon} *#{team_name}* · #{total_link}\n#{all_parts.join('  ·  ')}"
   end
 
   def build_jql_url(jql)
