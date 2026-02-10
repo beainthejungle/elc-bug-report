@@ -2,7 +2,7 @@
 
 require 'cgi'
 require 'date'
-require_relative 'fun_facts'
+require_relative 'dev_jokes'
 
 class ReportBuilder
   PRIORITY_EMOJI = {
@@ -17,18 +17,7 @@ class ReportBuilder
     'Organizations' => '🏢'
   }.freeze
 
-  GREETINGS = [
-    "*Good morning team!* Let's squash some bugs today!",
-    '*Rise and shine, bug hunters!* Time to make our code cleaner!',
-    '*Hello team!* Another day, another chance to ship quality code!',
-    "*Good morning!* Grab your coffee and let's tackle these bugs!",
-    "*Hey team!* Let's make today a great day for bug fixing!",
-    '*Morning everyone!* Together we can crush these bugs!',
-    "*Good morning!* Let's focus and knock out some bugs today!",
-    '*Hello bug busters!* Ready to make our product even better?'
-  ].freeze
-
-  SEPARATOR = '-' * 30
+  SEPARATOR = '━' * 32
 
   def initialize(issues, config, dry_run: false)
     @issues = issues
@@ -37,7 +26,7 @@ class ReportBuilder
     @statuses = config['statuses']
     @jira_url = config.dig('jira', 'base_url')
     @dry_run = dry_run
-    @fun_facts = FunFacts.new
+    @dev_jokes = DevJokes.new
   end
 
   def build
@@ -46,23 +35,17 @@ class ReportBuilder
     lines = []
     lines << build_header
     lines << ''
-    lines << GREETINGS.sample
+    lines << SEPARATOR
     lines << ''
-    lines << @fun_facts.format(stats[:total])
+    lines << build_joke_section
     lines << ''
     lines << SEPARATOR
     lines << ''
-    lines << build_summary(stats)
+    lines << build_stats_section(stats)
     lines << ''
     lines << SEPARATOR
     lines << ''
-    lines << build_priority_breakdown(stats)
-    lines << ''
-    lines << SEPARATOR
-    lines << ''
-    lines << build_team_breakdown(stats)
-    lines << ''
-    lines << "_Generated at #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}_"
+    lines << build_teams_section(stats)
 
     lines.join("\n")
   end
@@ -143,79 +126,93 @@ class ReportBuilder
   end
 
   def build_header
-    date = Date.today.strftime('%d/%m/%Y')
-    "🐛 *ELC Bug Report* — #{date}"
+    date = Date.today.strftime('%-d %b %Y')
+    "🐛 *ELC Bug Report* · #{date}"
   end
 
-  def build_summary(stats)
+  def build_joke_section
+    joke = @dev_jokes.format
+    return '' unless joke
+
+    "🎭 *Joke of the week*\n#{joke}"
+  end
+
+  def build_stats_section(stats)
     total_url = build_jql_url(build_all_issues_jql)
-    unassigned_url = build_jql_url(build_unassigned_jql)
-    blocked_url = build_jql_url(build_blocked_jql)
+    total_link = build_slack_link(total_url, stats[:total].to_s)
 
-    parts = []
-    parts << "Total: #{build_slack_link(total_url, stats[:total].to_s)}"
-    parts << "Bugs: #{stats[:bugs]}"
-    parts << "Chores: #{stats[:chores]}"
-    parts << "Unassigned: #{build_slack_link(unassigned_url, stats[:unassigned].to_s)}"
-    parts << "Blocked: #{build_slack_link(blocked_url, stats[:blocked].to_s)}"
-
-    "📋 *Summary:* #{parts.join(' | ')}"
-  end
-
-  def build_priority_breakdown(stats)
-    parts = []
-
-    %w[P0 P1 P2].each do |priority|
+    # Priority line
+    priority_parts = %w[P0 P1 P2].filter_map do |priority|
       count = stats[:by_priority][priority]
       next if count.zero?
 
-      emoji = PRIORITY_EMOJI[priority]
       url = build_jql_url(build_priority_jql(priority))
-      parts << "#{emoji} #{priority}: #{build_slack_link(url, count.to_s)}"
+      "#{PRIORITY_EMOJI[priority]} #{priority}: #{build_slack_link(url, count.to_s)}"
     end
 
-    return '🎯 *By Priority:* No issues!' if parts.empty?
+    # Status line
+    status_parts = []
+    if stats[:unassigned].positive?
+      url = build_jql_url(build_unassigned_jql)
+      status_parts << "⚠️ #{build_slack_link(url, stats[:unassigned].to_s)} unassigned"
+    end
+    if stats[:blocked].positive?
+      url = build_jql_url(build_blocked_jql)
+      status_parts << "🚫 #{build_slack_link(url, stats[:blocked].to_s)} blocked"
+    end
 
-    "🎯 *By Priority:* #{parts.join(' | ')}"
+    lines = []
+    lines << "📊 *#{total_link} open issues*"
+    lines << "├─ #{priority_parts.join('  ·  ')}" unless priority_parts.empty?
+    lines << "└─ #{status_parts.join('  ·  ')}" unless status_parts.empty?
+
+    lines.join("\n")
   end
 
-  def build_team_breakdown(stats)
+  def build_teams_section(stats)
     sorted_teams = stats[:by_team].sort_by { |name, _| name }
 
     team_lines = sorted_teams.filter_map do |team_name, team_stats|
       next if team_stats[:total].zero?
 
-      squad_values = team_stats[:squad_values]
-      team_url = build_jql_url(build_team_jql(squad_values))
-      icon = TEAM_ICONS[team_name] || '🔹'
-
-      # Build status info
-      status_parts = []
-      if team_stats[:unassigned] > 0
-        url = build_jql_url(build_team_unassigned_jql(squad_values))
-        status_parts << "Unassigned: #{build_slack_link(url, team_stats[:unassigned].to_s)}"
-      end
-      if team_stats[:blocked] > 0
-        url = build_jql_url(build_team_blocked_jql(squad_values))
-        status_parts << "Blocked: #{build_slack_link(url, team_stats[:blocked].to_s)}"
-      end
-
-      # Build priority breakdown (P0: X, P1: Y, P2: Z format)
-      priority_parts = %w[P0 P1 P2].filter_map do |priority|
-        count = team_stats[:by_priority][priority]
-        next if count.zero?
-
-        "#{PRIORITY_EMOJI[priority]} #{priority}: #{count}"
-      end
-
-      # Format: icon Team (total): P0: X, P1: Y, P2: Z | Unassigned: X / Blocked: Y
-      line = "#{icon} *#{team_name}* (#{build_slack_link(team_url,
-                                                         team_stats[:total].to_s)}): #{priority_parts.join(', ')}"
-      line += " — #{status_parts.join(' / ')}" unless status_parts.empty?
-      line
+      build_team_line(team_name, team_stats)
     end
 
-    "👥 *By Team*\n#{team_lines.join("\n")}"
+    "👥 *Teams*\n\n#{team_lines.join("\n\n")}"
+  end
+
+  def build_team_line(team_name, team_stats)
+    squad_values = team_stats[:squad_values]
+    team_url = build_jql_url(build_team_jql(squad_values))
+    icon = TEAM_ICONS[team_name] || '🔹'
+    total_link = build_slack_link(team_url, "#{team_stats[:total]} issues")
+
+    # Priority breakdown
+    priority_parts = %w[P0 P1 P2].filter_map do |priority|
+      count = team_stats[:by_priority][priority]
+      next if count.zero?
+
+      url = build_jql_url(build_team_priority_jql(squad_values, priority))
+      "#{PRIORITY_EMOJI[priority]} #{priority}: #{build_slack_link(url, count.to_s)}"
+    end
+
+    # Status breakdown
+    status_parts = []
+    if team_stats[:unassigned].positive?
+      url = build_jql_url(build_team_unassigned_jql(squad_values))
+      status_parts << "⚠️ #{build_slack_link(url, team_stats[:unassigned].to_s)} unassigned"
+    end
+    if team_stats[:blocked].positive?
+      url = build_jql_url(build_team_blocked_jql(squad_values))
+      status_parts << "🚫 #{build_slack_link(url, team_stats[:blocked].to_s)} blocked"
+    end
+
+    lines = []
+    lines << "#{icon} *#{team_name}* · #{total_link}"
+    lines << "   #{priority_parts.join('  ·  ')}" unless priority_parts.empty?
+    lines << "   #{status_parts.join('  ·  ')}" unless status_parts.empty?
+
+    lines.join("\n")
   end
 
   def build_jql_url(jql)
@@ -234,10 +231,6 @@ class ReportBuilder
     project = @config.dig('jira', 'project_key') || 'FCT'
     issue_types = (@config.dig('jira', 'issue_types') || %w[Bug Chore]).map { |t| "\"#{t}\"" }.join(', ')
     "project = #{project} AND issuetype IN (#{issue_types})"
-  end
-
-  def active_statuses_jql
-    @statuses['active'].map { |s| "\"#{s}\"" }.join(', ')
   end
 
   def blocked_statuses_jql
@@ -272,6 +265,10 @@ class ReportBuilder
 
   def build_team_jql(squad_values)
     "#{project_jql} AND #{squad_values_jql(squad_values)} AND resolution = Unresolved"
+  end
+
+  def build_team_priority_jql(squad_values, priority)
+    "#{project_jql} AND #{squad_values_jql(squad_values)} AND priority ~ \"(#{priority})\" AND resolution = Unresolved"
   end
 
   def build_team_unassigned_jql(squad_values)

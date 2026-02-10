@@ -1,0 +1,287 @@
+# Dev Jokes - One random joke shown each week
+# Format: question + answer (punchline)
+# Target: 60+ jokes to avoid repetition for a full year
+
+jokes:
+  # Classic programming jokes
+  - question: "Why do programmers prefer dark mode?"
+    answer: "Because light attracts bugs!"
+    emoji: "🪲"
+
+  - question: "Why do Java developers wear glasses?"
+    answer: "Because they can't C#!"
+    emoji: "👓"
+
+  - question: "A SQL query walks into a bar, walks up to two tables and asks..."
+    answer: "Can I join you?"
+    emoji: "🍺"
+
+  - question: "Why was the JavaScript developer sad?"
+    answer: "Because he didn't Node how to Express himself!"
+    emoji: "😢"
+
+  - question: "How many programmers does it take to change a light bulb?"
+    answer: "None, that's a hardware problem!"
+    emoji: "💡"
+
+  - question: "Why do programmers hate nature?"
+    answer: "It has too many bugs!"
+    emoji: "🌲"
+
+  - question: "What's a programmer's favorite hangout place?"
+    answer: "Foo Bar!"
+    emoji: "🍸"
+
+  - question: "Why did the developer go broke?"
+    answer: "Because he used up all his cache!"
+    emoji: "💸"
+
+  - question: "What do you call a programmer from Finland?"
+    answer: "Nerdic!"
+    emoji: "🇫🇮"
+
+  - question: "Why did the functions stop calling each other?"
+    answer: "They had too many arguments!"
+    emoji: "😤"
+
+  # Bug-related jokes
+  - question: "What's a bug's least favorite room?"
+    answer: "The living room... they prefer dead code!"
+    emoji: "🪦"
+
+  - question: "Why did the developer quit his job?"
+    answer: "Because he didn't get arrays!"
+    emoji: "📊"
+
+  - question: "What do you call 8 hobbits?"
+    answer: "A hobbyte!"
+    emoji: "🧙"
+
+  - question: "Why are Assembly programmers always soaking wet?"
+    answer: "They work below C level!"
+    emoji: "🌊"
+
+  - question: "What's a programmer's favorite song?"
+    answer: "Another one bytes the dust!"
+    emoji: "🎵"
+
+  - question: "Why did the programmer get stuck in the shower?"
+    answer: "The shampoo said: lather, rinse, repeat!"
+    emoji: "🚿"
+
+  - question: "What do you call a computer that sings?"
+    answer: "A-Dell!"
+    emoji: "🎤"
+
+  - question: "Why do programmers always mix up Halloween and Christmas?"
+    answer: "Because Oct 31 = Dec 25!"
+    emoji: "🎃"
+
+  - question: "How do trees access the internet?"
+    answer: "They log in!"
+    emoji: "🌳"
+
+  - question: "What did the router say to the doctor?"
+    answer: "It hurts when IP!"
+    emoji: "🏥"
+
+  # Therapy and emotions
+  - question: "Why did the developer go to therapy?"
+    answer: "Too many unresolved issues!"
+    emoji: "🛋️"
+
+  - question: "What's a programmer's favorite type of music?"
+    answer: "Algo-rhythm!"
+    emoji: "🎧"
+
+  - question: "Why did the Python developer get bitten?"
+    answer: "He forgot to handle the exception!"
+    emoji: "🐍"
+
+  - question: "What's a ghost's favorite data type?"
+    answer: "Boo-lean!"
+    emoji: "👻"
+
+  # More classics
+  - question: "Why did the database administrator leave his wife?"
+    answer: "She had one-to-many relationships!"
+    emoji: "💔"
+
+  - question: "What's a programmer's least favorite key?"
+    answer: "The escape key... it never works when you need it!"
+    emoji: "⌨️"
+
+  - question: "Why do backend developers make bad DJs?"
+    answer: "They always drop the database!"
+    emoji: "🎛️"
+
+  - question: "What did the HTML say to the CSS?"
+    answer: "You really add style to my life!"
+    emoji: "💅"
+
+  - question: "Why was the array feeling sick?"
+    answer: "It had an index out of bounds!"
+    emoji: "🤒"
+
+  - question: "What's a hacker's favorite season?"
+    answer: "Phishing season!"
+    emoji: "🎣"
+
+  # Git jokes
+  - question: "Why do programmers prefer Git?"
+    answer: "Because they can commit without marriage!"
+    emoji: "💍"
+
+  - question: "Why did the commit go to therapy?"
+    answer: "It had too many issues to push through!"
+    emoji: "🔄"
+
+  - question: "What's a Git user's favorite movie?"
+    answer: "The Branch Manager!"
+    emoji: "🎬"
+
+  - question: "Why was the pull request rejected?"
+    answer: "It had too many conflicts with the family!"
+    emoji: "👨‍👩‍👧"
+
+  # Language-specific
+  - question: "Why is Python so popular?"
+    answer: "It's not your Java everyday language!"
+    emoji: "☕"
+
+  - question: "Why did the C++ developer refuse to switch to Rust?"
+    answer: "He couldn't let go of his old pointers!"
+    emoji: "👉"
+
+  - question: "What's a Ruby developer's favorite gem?"
+    answer: "The one that actually works!"
+    emoji: "💎"
+
+  - question: "Why did Go developers never get lost?"
+    answer: "They always knew the way to go!"
+    emoji: "🗺️"
+
+  - question: "Why do TypeScript developers look so calm?"
+    answer: "They have fewer runtime surprises!"
+    emoji: "😌"
+
+  # Debugging jokes
+  - question: "What's the first rule of debugging?"
+    answer: "Don't tell anyone it was you who broke it!"
+    emoji: "🤫"
+
+  - question: "Why did the bug check into a hotel?"
+    answer: "It needed a place to crash!"
+    emoji: "🏨"
+
+  - question: "What's the best thing about UDP jokes?"
+    answer: "I don't care if you get them!"
+    emoji: "📡"
+
+  - question: "Why do programmers always get Christmas and Halloween confused?"
+    answer: "Because DEC 25 = OCT 31!"
+    emoji: "🎄"
+
+  - question: "What sits on a developer's shoulder and says 'Pieces of 7! Pieces of 7!'?"
+    answer: "A parity bit!"
+    emoji: "🦜"
+
+  # Tech company jokes
+  - question: "Why did the startup fail?"
+    answer: "It ran out of runway and crashed on the first iteration!"
+    emoji: "✈️"
+
+  - question: "What's the difference between a bug and a feature?"
+    answer: "The documentation!"
+    emoji: "📝"
+
+  - question: "Why did the intern get promoted?"
+    answer: "He finally understood the legacy code... just kidding, no one does!"
+    emoji: "📈"
+
+  # AI and modern tech
+  - question: "Why did the machine learning model go to therapy?"
+    answer: "It had too much bias!"
+    emoji: "🤖"
+
+  - question: "What did the neural network say after training?"
+    answer: "I've learned a lot, but I still don't know what I'm doing!"
+    emoji: "🧠"
+
+  - question: "Why did ChatGPT break up with its girlfriend?"
+    answer: "She said he was too predictive!"
+    emoji: "💬"
+
+  # More random
+  - question: "How does a computer get drunk?"
+    answer: "It takes screenshots!"
+    emoji: "🍻"
+
+  - question: "What do you call a computer floating in the ocean?"
+    answer: "A Dell Rolling in the Deep!"
+    emoji: "🌊"
+
+  - question: "Why did the cloud break up with the server?"
+    answer: "It needed more space!"
+    emoji: "☁️"
+
+  - question: "What does a proud computer call its little son?"
+    answer: "A microchip off the old block!"
+    emoji: "👶"
+
+  - question: "Why did the keyboard go to the therapist?"
+    answer: "It was feeling pressed!"
+    emoji: "😰"
+
+  - question: "What do you get when you cross a computer with an elephant?"
+    answer: "Lots of memory!"
+    emoji: "🐘"
+
+  - question: "Why did the computer sneeze?"
+    answer: "It had a virus!"
+    emoji: "🤧"
+
+  - question: "What's a computer's favorite snack?"
+    answer: "Microchips!"
+    emoji: "🍟"
+
+  - question: "Why did the JPEG go to jail?"
+    answer: "It was framed!"
+    emoji: "🖼️"
+
+  - question: "What do you call a computer superhero?"
+    answer: "A screen saver!"
+    emoji: "🦸"
+
+  # More technical
+  - question: "Why do Kubernetes administrators never get lost?"
+    answer: "They always know which cluster they're in!"
+    emoji: "🚢"
+
+  - question: "Why did the developer refuse to deploy on Friday?"
+    answer: "Because Monday's problems are future-them's problems!"
+    emoji: "📅"
+
+  - question: "What's the worst thing about async/await jokes?"
+    answer: "I'll tell you later!"
+    emoji: "⏳"
+
+  - question: "Why do APIs make terrible friends?"
+    answer: "They only respond when you request something!"
+    emoji: "🤝"
+
+  - question: "What did the array say to the object?"
+    answer: "Stop being so key-y about everything!"
+    emoji: "🔑"
+
+  - question: "Why are monolithic apps bad at relationships?"
+    answer: "They're too tightly coupled!"
+    emoji: "🔗"
+
+  - question: "Why did the regex take so long to respond?"
+    answer: "It was looking for the right match!"
+    emoji: "❤️"
+
+  - question: "What did the code reviewer say to the junior developer?"
+    answer: "This code is like my dating life... full of issues!"
+    emoji: "💕"
