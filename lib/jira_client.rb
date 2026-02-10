@@ -26,18 +26,20 @@ class JiraClient
 
   def build_jql(squads, issue_type)
     squad_values = squads.map { |s| "\"#{s}\"" }.join(', ')
-    
+
     "issuetype = #{issue_type} AND " \
     "\"#{@squad_field}\" IN (#{squad_values}) AND " \
-    "status NOT IN (Done, Closed, Resolved) " \
-    "ORDER BY priority DESC, created ASC"
+    'status NOT IN (Done, Closed, Resolved) ' \
+    'ORDER BY priority DESC, created ASC'
   end
 
   def fetch_issues(jql)
-    response = connection.get('/rest/api/3/search') do |req|
-      req.params['jql'] = jql
-      req.params['maxResults'] = 100
-      req.params['fields'] = 'summary,status,priority,created'
+    response = connection.post('/rest/api/3/search/jql') do |req|
+      req.body = {
+        jql: jql,
+        maxResults: 100,
+        fields: %w[summary status priority created]
+      }.to_json
     end
 
     if response.success?
