@@ -2,8 +2,8 @@ name: Daily Bug Report
 
 on:
   schedule:
-    # 7:00 UTC = 9:00 Europe/Madrid (CET), weekdays only
-    - cron: "0 7 * * 1-5"
+    # 7:00 UTC = 9:00 Europe/Madrid (CET), Mondays only
+    - cron: "0 7 * * 1"
   workflow_dispatch:
 
 jobs:
