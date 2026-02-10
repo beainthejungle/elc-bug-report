@@ -27,9 +27,10 @@ class JiraClient
   def build_jql(squads, issue_type)
     squad_values = squads.map { |s| "\"#{s}\"" }.join(', ')
 
+    'project = FCT AND ' \
     "issuetype = #{issue_type} AND " \
     "\"#{@squad_field}\" IN (#{squad_values}) AND " \
-    'status NOT IN (Done, Closed, Resolved) ' \
+    'status NOT IN (Discarded, Done) ' \
     'ORDER BY priority DESC, created ASC'
   end
 
