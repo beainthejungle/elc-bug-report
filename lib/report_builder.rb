@@ -6,15 +6,15 @@ require_relative 'fun_facts'
 
 class ReportBuilder
   PRIORITY_EMOJI = {
-    'P0' => ':red_circle:',
-    'P1' => ':large_yellow_circle:',
-    'P2' => ':large_green_circle:'
+    'P0' => '🔴',
+    'P1' => '🟡',
+    'P2' => '🟢'
   }.freeze
 
   TEAM_ICONS = {
-    'Contracts' => ':memo:',
-    'OffOnBoarding' => ':rocket:',
-    'Organizations' => ':office:'
+    'Contracts' => '📝',
+    'OffOnBoarding' => '🚀',
+    'Organizations' => '🏢'
   }.freeze
 
   GREETINGS = [
@@ -144,7 +144,7 @@ class ReportBuilder
 
   def build_header
     date = Date.today.strftime('%d/%m/%Y')
-    ":bug: *ELC Bug Report* - #{date}"
+    "🐛 *ELC Bug Report* — #{date}"
   end
 
   def build_summary(stats)
@@ -159,7 +159,7 @@ class ReportBuilder
     parts << "Unassigned: #{build_slack_link(unassigned_url, stats[:unassigned].to_s)}"
     parts << "Blocked: #{build_slack_link(blocked_url, stats[:blocked].to_s)}"
 
-    ":clipboard: *Summary:* #{parts.join(' | ')}"
+    "📋 *Summary:* #{parts.join(' | ')}"
   end
 
   def build_priority_breakdown(stats)
@@ -174,9 +174,9 @@ class ReportBuilder
       parts << "#{emoji} #{priority}: #{build_slack_link(url, count.to_s)}"
     end
 
-    return ':dart: *By Priority:* No issues!' if parts.empty?
+    return '🎯 *By Priority:* No issues!' if parts.empty?
 
-    ":dart: *By Priority:* #{parts.join(' | ')}"
+    "🎯 *By Priority:* #{parts.join(' | ')}"
   end
 
   def build_team_breakdown(stats)
@@ -187,7 +187,7 @@ class ReportBuilder
 
       squad_values = team_stats[:squad_values]
       team_url = build_jql_url(build_team_jql(squad_values))
-      icon = TEAM_ICONS[team_name] || ':small_blue_diamond:'
+      icon = TEAM_ICONS[team_name] || '🔹'
 
       parts = []
       parts << "#{team_stats[:bugs]} bugs" if team_stats[:bugs] > 0
@@ -215,7 +215,7 @@ class ReportBuilder
       line
     end
 
-    ":busts_in_silhouette: *By Team*\n#{team_lines.join("\n")}"
+    "👥 *By Team*\n#{team_lines.join("\n")}"
   end
 
   def build_jql_url(jql)
