@@ -5,7 +5,6 @@ require_relative '../lib/config_loader'
 require_relative '../lib/jira_client'
 require_relative '../lib/slack_client'
 require_relative '../lib/report_builder'
-require_relative '../lib/fun_facts'
 
 class ElcBugReport
   def initialize(args)
@@ -20,21 +19,19 @@ class ElcBugReport
     puts "Mode: #{@dry_run ? 'DRY RUN' : 'LIVE'}"
     puts
 
+    # Initialize Jira client
     jira = JiraClient.new(@config['jira'])
-    teams_config = @config['teams']
 
-    # Fetch data for each team
-    team_data = {}
-    teams_config.each do |team_name, squads|
-      puts "Fetching data for #{team_name}..."
-      team_data[team_name] = {
-        bugs: jira.fetch_bugs(squads),
-        chores: jira.fetch_chores(squads)
-      }
-    end
+    # Get all squads from teams config
+    all_squads = @config['teams'].values.flatten.uniq
+    statuses = @config['statuses']
+
+    # Fetch all issues in one call
+    puts "Fetching issues from Jira..."
+    issues = jira.fetch_all_issues(all_squads, statuses)
 
     # Build the report
-    report = ReportBuilder.new(team_data, @config).build
+    report = ReportBuilder.new(issues, @config, dry_run: @dry_run).build
 
     puts
     puts "Report Preview:"
