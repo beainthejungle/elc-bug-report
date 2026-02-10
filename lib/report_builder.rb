@@ -189,10 +189,7 @@ class ReportBuilder
       team_url = build_jql_url(build_team_jql(squad_values))
       icon = TEAM_ICONS[team_name] || '🔹'
 
-      parts = []
-      parts << "#{team_stats[:bugs]} bugs" if team_stats[:bugs] > 0
-      parts << "#{team_stats[:chores]} chores" if team_stats[:chores] > 0
-
+      # Build status info
       status_parts = []
       if team_stats[:unassigned] > 0
         url = build_jql_url(build_team_unassigned_jql(squad_values))
@@ -203,15 +200,18 @@ class ReportBuilder
         status_parts << "Blocked: #{build_slack_link(url, team_stats[:blocked].to_s)}"
       end
 
-      priority_parts = team_stats[:by_priority].sort.filter_map do |priority, count|
+      # Build priority breakdown (P0: X, P1: Y, P2: Z format)
+      priority_parts = %w[P0 P1 P2].filter_map do |priority|
+        count = team_stats[:by_priority][priority]
         next if count.zero?
 
-        "#{PRIORITY_EMOJI[priority]} #{count}"
+        "#{PRIORITY_EMOJI[priority]} #{priority}: #{count}"
       end
 
-      line = "#{icon} *#{team_name}* (#{build_slack_link(team_url, team_stats[:total].to_s)}): #{parts.join(', ')}"
-      line += " | #{status_parts.join(' / ')}" unless status_parts.empty?
-      line += " | #{priority_parts.join(' ')}" unless priority_parts.empty?
+      # Format: icon Team (total): P0: X, P1: Y, P2: Z | Unassigned: X / Blocked: Y
+      line = "#{icon} *#{team_name}* (#{build_slack_link(team_url,
+                                                         team_stats[:total].to_s)}): #{priority_parts.join(', ')}"
+      line += " — #{status_parts.join(' / ')}" unless status_parts.empty?
       line
     end
 
