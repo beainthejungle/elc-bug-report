@@ -1,0 +1,23 @@
+# ELC Bug Report Configuration
+# Copy this file to config.yml and fill in your credentials
+
+jira:
+  base_url: https://factorial-hr.atlassian.net
+  email: your-email@factorial.co
+  api_token: your-jira-api-token
+  # Squad field ID in Jira
+  squad_field: customfield_10041
+
+slack:
+  bot_token: xoxb-your-slack-bot-token
+  default_channel: "#employee-lifecycle-teams"
+
+# Teams configuration
+# Map team names to their squad values in Jira
+teams:
+  Contracts:
+    - "Contracts"
+  OffOnBoarding:
+    - "OffOnBoarding"
+  Organizations:
+    - "Organizations"

@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '../lib/config_loader'
+require_relative '../lib/jira_client'
+require_relative '../lib/slack_client'
+require_relative '../lib/report_builder'
+require_relative '../lib/fun_facts'
+
+class ElcBugReport
+  def initialize(args)
+    @dry_run = args.include?('--dry-run')
+    @channel = extract_channel(args)
+    @config = ConfigLoader.load
+  end
+
+  def run
+    puts "ELC Bug Report"
+    puts "=" * 50
+    puts "Mode: #{@dry_run ? 'DRY RUN' : 'LIVE'}"
+    puts
+
+    jira = JiraClient.new(@config['jira'])
+    teams_config = @config['teams']
+
+    # Fetch data for each team
+    team_data = {}
+    teams_config.each do |team_name, squads|
+      puts "Fetching data for #{team_name}..."
+      team_data[team_name] = {
+        bugs: jira.fetch_bugs(squads),
+        chores: jira.fetch_chores(squads)
+      }
+    end
+
+    # Build the report
+    report = ReportBuilder.new(team_data, @config).build
+
+    puts
+    puts "Report Preview:"
+    puts "-" * 50
+    puts report
+    puts "-" * 50
+
+    if @dry_run
+      puts
+      puts "Dry run complete. No message sent to Slack."
+    else
+      channel = @channel || @config.dig('slack', 'default_channel')
+      puts
+      puts "Sending to Slack channel: #{channel}"
+      slack = SlackClient.new(@config['slack'])
+      slack.post_message(channel, report)
+      puts "Message sent successfully!"
+    end
+  end
+
+  private
+
+  def extract_channel(args)
+    channel_index = args.index('--channel')
+    return nil unless channel_index
+
+    args[channel_index + 1]
+  end
+end
+
+ElcBugReport.new(ARGV).run

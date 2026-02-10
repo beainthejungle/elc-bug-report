@@ -1,0 +1,21 @@
+# Configuration with secrets
+config/config.yml
+
+# Ruby/Bundler
+.bundle/
+vendor/
+*.gem
+Gemfile.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
