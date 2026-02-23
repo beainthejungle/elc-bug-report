@@ -346,10 +346,20 @@ class ReportBuilder
   end
 
   def build_created_last_week_jql
-    "#{project_jql} AND #{all_squad_values_jql} AND created >= -1w"
+    monday_start, monday_end = last_week_monday_range
+    "#{project_jql} AND #{all_squad_values_jql} AND created >= \"#{monday_start}\" AND created < \"#{monday_end}\""
   end
 
   def build_solved_last_week_jql
-    "#{project_jql} AND #{all_squad_values_jql} AND resolved >= -1w"
+    monday_start, monday_end = last_week_monday_range
+    "#{project_jql} AND #{all_squad_values_jql} AND resolved >= \"#{monday_start}\" AND resolved < \"#{monday_end}\""
+  end
+
+  def last_week_monday_range
+    today = Date.today
+    days_since_monday = (today.wday - 1) % 7
+    this_monday = today - days_since_monday
+    last_monday = this_monday - 7
+    [last_monday.to_s, this_monday.to_s]
   end
 end

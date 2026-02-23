@@ -141,17 +141,29 @@ class JiraClient
   end
 
   def build_created_last_week_jql(squads)
+    monday_start, monday_end = last_week_monday_range
     "project = #{@project_key} AND " \
     "issuetype IN (#{issue_types_jql}) AND " \
     "#{squad_jql(squads)} AND " \
-    'created >= -1w'
+    "created >= \"#{monday_start}\" AND created < \"#{monday_end}\""
   end
 
   def build_solved_last_week_jql(squads)
+    monday_start, monday_end = last_week_monday_range
     "project = #{@project_key} AND " \
     "issuetype IN (#{issue_types_jql}) AND " \
     "#{squad_jql(squads)} AND " \
-    'resolved >= -1w'
+    "resolved >= \"#{monday_start}\" AND resolved < \"#{monday_end}\""
+  end
+
+  # Returns [last_monday, this_monday] as date strings
+  def last_week_monday_range
+    today = Date.today
+    # Date#wday: 0=Sunday, 1=Monday, ...
+    days_since_monday = (today.wday - 1) % 7
+    this_monday = today - days_since_monday
+    last_monday = this_monday - 7
+    [last_monday.to_s, this_monday.to_s]
   end
 
   def fetch_issue_count(jql, label)
