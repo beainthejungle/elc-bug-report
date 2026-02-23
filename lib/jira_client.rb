@@ -15,6 +15,8 @@ class JiraClient
     @email = config['email']
     @api_token = config['api_token']
     @squad_field = config['squad_field'] || 'squad[Dropdown]'
+    @project_key = config['project_key'] || 'FCT'
+    @issue_types = config['issue_types'] || %w[Bug Chore]
   end
 
   def fetch_all_issues(squads, statuses)
@@ -57,17 +59,134 @@ class JiraClient
     all_issues.map { |issue| normalize_issue(issue) }
   end
 
+  # Fetch the count of issues created last week
+  def fetch_created_last_week_count(squads)
+    jql = build_created_last_week_jql(squads)
+    fetch_issue_count(jql, 'created last week')
+  end
+
+  # Fetch the count of issues resolved last week
+  def fetch_solved_last_week_count(squads)
+    jql = build_solved_last_week_jql(squads)
+    fetch_issue_count(jql, 'solved last week')
+  end
+
+  # Fetch the sum of SLA points for all open issues
+  def fetch_sla_points(squads, sla_field_name)
+    jql = build_open_issues_jql(squads)
+    puts "Fetching SLA points..."
+
+    total_points = 0
+    next_page_token = nil
+
+    loop do
+      body = {
+        jql: jql,
+        maxResults: MAX_RESULTS,
+        fields: [sla_field_name]
+      }
+      body[:nextPageToken] = next_page_token if next_page_token
+
+      response = connection.post('/rest/api/3/search/jql') do |req|
+        req.body = body.to_json
+      end
+
+      unless response.success?
+        puts "Jira API error fetching SLA: #{response.status} - #{response.body}"
+        return nil
+      end
+
+      data = JSON.parse(response.body)
+      issues = data['issues'] || []
+
+      issues.each do |issue|
+        points = issue.dig('fields', sla_field_name)
+        total_points += points.to_f if points
+      end
+
+      next_page_token = data['nextPageToken']
+      break if next_page_token.nil? || issues.empty?
+    end
+
+    puts "Total SLA points: #{total_points}"
+    total_points
+  end
+
   private
 
-  def build_jql(squads, statuses)
+  def issue_types_jql
+    @issue_types.map { |t| "\"#{t}\"" }.join(', ')
+  end
+
+  def squad_jql(squads)
     squad_values = squads.map { |s| "\"#{s}\"" }.join(', ')
+    "\"#{@squad_field}\" IN (#{squad_values})"
+  end
+
+  def build_jql(squads, statuses)
     all_statuses = (statuses['active'] + statuses['blocked']).map { |s| "\"#{s}\"" }.join(', ')
 
-    'project = FCT AND ' \
-    'issuetype IN (Bug, Chore) AND ' \
-    "\"#{@squad_field}\" IN (#{squad_values}) AND " \
+    "project = #{@project_key} AND " \
+    "issuetype IN (#{issue_types_jql}) AND " \
+    "#{squad_jql(squads)} AND " \
     "status IN (#{all_statuses}) " \
     'ORDER BY priority ASC, created ASC'
+  end
+
+  def build_open_issues_jql(squads)
+    "project = #{@project_key} AND " \
+    "issuetype IN (#{issue_types_jql}) AND " \
+    "#{squad_jql(squads)} AND " \
+    'resolution = Unresolved'
+  end
+
+  def build_created_last_week_jql(squads)
+    "project = #{@project_key} AND " \
+    "issuetype IN (#{issue_types_jql}) AND " \
+    "#{squad_jql(squads)} AND " \
+    'created >= -1w'
+  end
+
+  def build_solved_last_week_jql(squads)
+    "project = #{@project_key} AND " \
+    "issuetype IN (#{issue_types_jql}) AND " \
+    "#{squad_jql(squads)} AND " \
+    'resolved >= -1w'
+  end
+
+  def fetch_issue_count(jql, label)
+    puts "Fetching #{label}..."
+
+    count = 0
+    next_page_token = nil
+
+    loop do
+      body = {
+        jql: jql,
+        maxResults: MAX_RESULTS,
+        fields: ['summary']
+      }
+      body[:nextPageToken] = next_page_token if next_page_token
+
+      response = connection.post('/rest/api/3/search/jql') do |req|
+        req.body = body.to_json
+      end
+
+      unless response.success?
+        puts "Jira API error (#{label}): #{response.status} - #{response.body}"
+        return 0
+      end
+
+      data = JSON.parse(response.body)
+      issues = data['issues'] || []
+      count += issues.length
+
+      next_page_token = data['nextPageToken']
+      break if data['isLast'] || next_page_token.nil? || issues.empty?
+    end
+
+    puts "#{label}: #{count}"
+    count
   end
 
   def normalize_issue(issue)

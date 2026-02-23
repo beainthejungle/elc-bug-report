@@ -30,13 +30,37 @@ class ElcBugReport
     puts "Fetching issues from Jira..."
     issues = jira.fetch_all_issues(all_squads, statuses)
 
+    # Fetch created vs solved last week
+    puts "Fetching weekly stats..."
+    weekly_stats = {
+      created: jira.fetch_created_last_week_count(all_squads),
+      solved: jira.fetch_solved_last_week_count(all_squads)
+    }
+
+    # Fetch SLA points
+    sla_field = @config.dig('jira', 'sla_field')
+    sla_points = nil
+    if sla_field
+      sla_points = jira.fetch_sla_points(all_squads, sla_field)
+    else
+      puts "No SLA field configured (jira.sla_field), skipping SLA points."
+    end
+
     # Build the report
-    report = ReportBuilder.new(issues, @config, dry_run: @dry_run).build
+    report = ReportBuilder.new(
+      issues, @config,
+      weekly_stats: weekly_stats,
+      sla_points: sla_points,
+      dry_run: @dry_run
+    )
+
+    # Plain text for preview
+    text = report.build_text
 
     puts
     puts "Report Preview:"
     puts "-" * 50
-    puts report
+    puts text
     puts "-" * 50
 
     if @dry_run
@@ -47,7 +71,9 @@ class ElcBugReport
       puts
       puts "Sending to Slack channel: #{channel}"
       slack = SlackClient.new(@config['slack'])
-      slack.post_message(channel, report)
+      # Send with Block Kit blocks; text is fallback for notifications
+      blocks = report.build_blocks
+      slack.post_message(channel, text, blocks: blocks)
       puts "Message sent successfully!"
     end
   end

@@ -11,6 +11,13 @@ jira:
   issue_types:
     - Bug
     - Chore
+  # SLA points custom field ID (find it in Jira admin or issue JSON)
+  sla_field: customfield_XXXXX
+  # Optional: override priority names used in JQL (defaults shown below)
+  # priority_names:
+  #   P0: "Highest (P0)"
+  #   P1: "High (P1)"
+  #   P2: "Medium (P2)"
 
 slack:
   bot_token: xoxb-your-slack-bot-token

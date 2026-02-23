@@ -11,39 +11,64 @@ class ReportBuilder
     'P2' => '🟢'
   }.freeze
 
+  # Mapping from short priority code to full Jira priority name
+  PRIORITY_NAMES = {
+    'P0' => 'Highest (P0)',
+    'P1' => 'High (P1)',
+    'P2' => 'Medium (P2)'
+  }.freeze
+
   TEAM_ICONS = {
     'Contracts' => '📝',
     'OffOnBoarding' => '🚀',
     'Organizations' => '🏢'
   }.freeze
 
-  SEPARATOR = '───'
-
-  def initialize(issues, config, dry_run: false)
+  def initialize(issues, config, weekly_stats: nil, sla_points: nil, dry_run: false)
     @issues = issues
     @config = config
     @teams = config['teams']
     @statuses = config['statuses']
     @jira_url = config.dig('jira', 'base_url')
+    @weekly_stats = weekly_stats
+    @sla_points = sla_points
     @dry_run = dry_run
     @dev_jokes = DevJokes.new
   end
 
-  def build
+  # Returns an array of Slack Block Kit blocks
+  def build_blocks
     stats = calculate_stats
+
+    blocks = []
+    blocks << section_block(build_header)
+    blocks << divider_block
+    blocks << section_block(build_joke_section)
+    blocks << divider_block
+    blocks << section_block(build_stats_section(stats))
+    blocks << divider_block
+    blocks << section_block(build_teams_section(stats))
+
+    blocks
+  end
+
+  # Returns plain text for dry-run preview
+  def build_text
+    stats = calculate_stats
+    separator = '───'
 
     lines = []
     lines << build_header
     lines << ''
-    lines << SEPARATOR
+    lines << separator
     lines << ''
     lines << build_joke_section
     lines << ''
-    lines << SEPARATOR
+    lines << separator
     lines << ''
     lines << build_stats_section(stats)
     lines << ''
-    lines << SEPARATOR
+    lines << separator
     lines << ''
     lines << build_teams_section(stats)
 
@@ -51,6 +76,20 @@ class ReportBuilder
   end
 
   private
+
+  def section_block(text)
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: text
+      }
+    }
+  end
+
+  def divider_block
+    { type: 'divider' }
+  end
 
   def calculate_stats
     stats = {
@@ -161,10 +200,32 @@ class ReportBuilder
       status_parts << "🚫 #{build_slack_link(url, stats[:blocked].to_s)} blocked"
     end
 
-    # All on separate lines, no tree symbols
+    # Header line with SLA
+    header = "📊 *#{total_link} open issues*"
+    if @sla_points
+      display_points = @sla_points == @sla_points.to_i ? @sla_points.to_i : @sla_points.round(1)
+      header += "  🎯 SLA: #{display_points}"
+    end
+
     all_parts = priority_parts + status_parts
 
-    "📊 *#{total_link} open issues*\n#{all_parts.join('  ·  ')}"
+    result = "#{header}\n#{all_parts.join('  ·  ')}"
+
+    # Weekly created vs solved
+    if @weekly_stats
+      created = @weekly_stats[:created]
+      solved = @weekly_stats[:solved]
+
+      created_url = build_jql_url(build_created_last_week_jql)
+      solved_url = build_jql_url(build_solved_last_week_jql)
+
+      created_link = build_slack_link(created_url, "#{created} created")
+      solved_link = build_slack_link(solved_url, "#{solved} solved")
+
+      result += "\n📅 Last week: #{created_link}  ·  #{solved_link}"
+    end
+
+    result
   end
 
   def build_teams_section(stats)
@@ -205,7 +266,6 @@ class ReportBuilder
       status_parts << "🚫 #{build_slack_link(url, team_stats[:blocked].to_s)} blocked"
     end
 
-    # All in one line
     all_parts = priority_parts + status_parts
     "#{icon} *#{team_name}* · #{total_link}\n#{all_parts.join('  ·  ')}"
   end
@@ -255,7 +315,8 @@ class ReportBuilder
   end
 
   def build_priority_jql(priority)
-    "#{project_jql} AND #{all_squad_values_jql} AND priority ~ \"(#{priority})\" AND resolution = Unresolved"
+    priority_name = priority_jql_name(priority)
+    "#{project_jql} AND #{all_squad_values_jql} AND priority = \"#{priority_name}\" AND resolution = Unresolved"
   end
 
   def build_team_jql(squad_values)
@@ -263,7 +324,8 @@ class ReportBuilder
   end
 
   def build_team_priority_jql(squad_values, priority)
-    "#{project_jql} AND #{squad_values_jql(squad_values)} AND priority ~ \"(#{priority})\" AND resolution = Unresolved"
+    priority_name = priority_jql_name(priority)
+    "#{project_jql} AND #{squad_values_jql(squad_values)} AND priority = \"#{priority_name}\" AND resolution = Unresolved"
   end
 
   def build_team_unassigned_jql(squad_values)
@@ -272,5 +334,22 @@ class ReportBuilder
 
   def build_team_blocked_jql(squad_values)
     "#{project_jql} AND #{squad_values_jql(squad_values)} AND status IN (#{blocked_statuses_jql})"
+  end
+
+  def priority_jql_name(priority)
+    custom = @config.dig('jira', 'priority_names')
+    if custom && custom[priority]
+      custom[priority]
+    else
+      PRIORITY_NAMES[priority] || priority
+    end
+  end
+
+  def build_created_last_week_jql
+    "#{project_jql} AND #{all_squad_values_jql} AND created >= -1w"
+  end
+
+  def build_solved_last_week_jql
+    "#{project_jql} AND #{all_squad_values_jql} AND resolved >= -1w"
   end
 end

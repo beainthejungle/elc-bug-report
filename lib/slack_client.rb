@@ -10,11 +10,14 @@ class SlackClient
     @client = Slack::Web::Client.new
   end
 
-  def post_message(channel, text)
-    @client.chat_postMessage(
+  def post_message(channel, text, blocks: nil)
+    params = {
       channel: channel,
       text: text,
       mrkdwn: true
-    )
+    }
+    params[:blocks] = blocks if blocks
+
+    @client.chat_postMessage(**params)
   end
 end
