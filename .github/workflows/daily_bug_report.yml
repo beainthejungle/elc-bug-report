@@ -23,7 +23,7 @@ jobs:
       - name: Generate config from secret
         run: |
           mkdir -p config
-          echo "$CONFIG_YML" > config/config.yml
+          printenv CONFIG_YML > config/config.yml
         env:
           CONFIG_YML: ${{ secrets.CONFIG_YML }}
 
