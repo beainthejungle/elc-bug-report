@@ -45,9 +45,10 @@ class ReportBuilder
     blocks << divider_block
     blocks << section_block(build_joke_section)
     blocks << divider_block
-    blocks << section_block(build_stats_section(stats))
+    blocks.concat(build_stats_blocks(stats))
     blocks << divider_block
-    blocks << section_block(build_teams_section(stats))
+    blocks << section_block("👥 *Teams*")
+    blocks.concat(build_team_blocks(stats))
 
     blocks
   end
@@ -176,6 +177,59 @@ class ReportBuilder
     "🎭 *Joke of the week*\n#{joke}"
   end
 
+  # Returns an array of section blocks for stats, split to stay under 3000 chars
+  def build_stats_blocks(stats)
+    blocks = []
+
+    total_url = build_jql_url(build_all_issues_jql)
+    total_link = build_slack_link(total_url, stats[:total].to_s)
+
+    # Priority line
+    priority_parts = %w[P0 P1 P2].filter_map do |priority|
+      count = stats[:by_priority][priority]
+      next if count.zero?
+
+      url = build_jql_url(build_priority_jql(priority))
+      "#{PRIORITY_EMOJI[priority]} #{priority}: #{build_slack_link(url, count.to_s)}"
+    end
+
+    # Status parts
+    status_parts = []
+    if stats[:unassigned].positive?
+      url = build_jql_url(build_unassigned_jql)
+      status_parts << "🪑 #{build_slack_link(url, stats[:unassigned].to_s)} unassigned"
+    end
+    if stats[:blocked].positive?
+      url = build_jql_url(build_blocked_jql)
+      status_parts << "🚫 #{build_slack_link(url, stats[:blocked].to_s)} blocked"
+    end
+
+    header = "📊 *#{total_link} open issues*"
+    if @sla_points
+      display_points = @sla_points == @sla_points.to_i ? @sla_points.to_i : @sla_points.round(1)
+      header += "  🎯 SLA: #{display_points}"
+    end
+
+    all_parts = priority_parts + status_parts
+    blocks << section_block("#{header}\n#{all_parts.join('  ·  ')}")
+
+    # Weekly stats in a separate block to avoid exceeding 3000 chars
+    if @weekly_stats
+      created = @weekly_stats[:created]
+      solved = @weekly_stats[:solved]
+
+      created_url = build_jql_url(build_created_last_week_jql)
+      solved_url = build_jql_url(build_solved_last_week_jql)
+
+      created_link = build_slack_link(created_url, "#{created} created")
+      solved_link = build_slack_link(solved_url, "#{solved} solved")
+
+      blocks << section_block("📅 Last week: #{created_link}  ·  #{solved_link}")
+    end
+
+    blocks
+  end
+
   def build_stats_section(stats)
     total_url = build_jql_url(build_all_issues_jql)
     total_link = build_slack_link(total_url, stats[:total].to_s)
@@ -226,6 +280,17 @@ class ReportBuilder
     end
 
     result
+  end
+
+  # Returns an array of section blocks, one per team, to avoid Slack's 3000 char limit
+  def build_team_blocks(stats)
+    sorted_teams = stats[:by_team].sort_by { |name, _| name }
+
+    sorted_teams.filter_map do |team_name, team_stats|
+      next if team_stats[:total].zero?
+
+      section_block(build_team_line(team_name, team_stats))
+    end
   end
 
   def build_teams_section(stats)
